@@ -1,4 +1,4 @@
 # R_Statistics
-R_statistics:
+Projects for Coursera projects: Statistics with R specialisation (Duke University)
 - Intro to probability & statistics
 - Statistical Inference

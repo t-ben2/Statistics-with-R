@@ -14,7 +14,8 @@ output:
 ```{r load-packages, message = FALSE}
 library(ggplot2)
 library(dplyr)
-library(stats)
+library(tidyr)
+library(statsr)
 ```
 
 ### Load data
@@ -84,10 +85,38 @@ gss %>%
 ```
 
 The above table shows that 3% of black respondants, 9% of other respondants and 7% of white respondants achive Graduate level education.
-* * *
+
+We can summarise this in a contingency table below:
+```{r}
+contingency_table <- table(gss$degree,gss$race)
+
+contingency_table
+```
+
+
+***
 
 ## Part 4: Inference
 
-NOTE: Insert code chunks as needed by clicking on the "Insert a new code chunk" 
-button (green button with orange arrow) above. Make sure that your code is visible
-in the project you submit. Delete this note when before you submit your work.
+***
+The chi-squared test of independence is used where there are 2 categorical variables, and at least one having at keast more than 2 levels.
+
+The conditions are the same as for a goodness of fit test:
+- Independence: 
+  random sample, n<10% of population when sampling without          replacement
+- Sample size:
+  Each secnario must have minimum 5 occurences
+  
+In the intro to this study we state that we will assume random sampling, and the 57,000 respondants is well under 10% of the population of the US.
+
+The contingency table shows that each scenario has more than 5 occurences also.
+
+This allows us to test our hypothesis on whether race affects education levels, and to a 5% significance level.
+
+The null hypothesis is that race and eductaion level are independent. Alternative hypothesis is that they are associated. 
+
+```{r}
+chisq.test(contingency_table)
+```
+
+The p-value is well below 5%, and so we reject the null hypothesis and conclude that race and education level are associated.

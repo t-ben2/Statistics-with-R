@@ -1,0 +1,215 @@
+---
+title: "Exploring the BRFSS data"
+output:
+  html_document:
+    fig_height: 4
+    highlight: pygments
+    theme: spacelab
+  pdf_document: default
+---
+
+## Setup
+
+### Load packages
+
+```{r load-packages, message = FALSE}
+library(ggplot2)
+library(dplyr)
+```
+
+### Load data
+
+
+```{r load-data}
+load("brfss2013.RData")
+```
+
+* * *
+
+## Part 1: Data
+
+ - Data has been collected by the Behavioral Risk Factor Surveillence System (BFRSS). The BRFSS objective is to collect uniform, state-specific data on preventive health practices and risk behaviors that are linked to chronic diseases, injuries, and preventable infectious diseases that affect the adult population. 
+ 
+- The number of participating states has increased over the years from 15 in 1984, to 50 states in 2001. Monthly telephone interviews was the method of collecting the data from the population of adults in the participating states.
+ - Since 2011, BFRSS has collected data through landline and mobile telephone surveys
+ - For landline surveys, interviewers collect data from a randomly selected adult in a household
+ - For cellular surveys, intereviewers collect data from an adult who owns a mobile, and resides in a private residence of college housing
+ 
+Sampling Method:
+
+- Random sampling aims to generalise the sample across the full population (i.e. US population of adults) and stratified sampling does seem to have occured here where the BFRSS splits the population into households and then randomly samples from within that household
+
+- However in this study there is sampling bias in the form of voluntary response, where only people who volunteer are included in the sample. Often these are people with a strong opinion on the issue and may not be a non-random fraction of the population
+
+- In addition, since only adults who have a private residence, or college housing are subject to the surveys there may be some adults who are not a part of this catchment group and could never receive a call (if they don't have a phone as well!)
+
+- Since this is an observational study, random assignment was not used and we cannot form any conclusions on the causality of any observed relationships in the data
+* * *
+
+## Part 2: Research questions
+
+The main survey is split into several distint sections, such as Health Care Access, Quality of Life etc. and so this is a natural way to identify our research questions guided by this split.
+
+**Research quesion 1:**
+
+1. It would be a good start to analyse the demographics of the population, so that we can start to think about how this survey generalises to our target population, the non-institutionalised US population aged over 18. We will focus on gender, eductaion and income level here. What proportions of the sample are male or female, and what education and income levels do the majority of respondants have?
+
+**Research quesion 2:**
+
+2. We want to look at the section on tobacco, and we can look at how this impacts the respondant's general health. We will look at whether the respondant has recently stopped smoking, and how the time since last smoking and how this relates to general health. Does the smoking frequency of an individual relate to a difference in general health? This is important when giving helath advice on smoking to individuals, althought note that in this study we cannot comment on causality.
+
+**Research quesion 3:**
+
+3. We want to look at exercise and how this impacts the general health or each respondant. We will focus on minutes of walking, running, jogging or swimming to explore if there is a correlation between minutes of exercise and general health. This is important when giving health advice on drinking to individuals, althought note that in this study we cannot comment on causality.
+
+* * *
+
+## Part 3: Exploratory data analysis
+
+**Research quesion 1:**
+
+We want to explore some basic demographics of the paticipants and the timing of the survey, so we can assess how generalisable this data is to the full US adult population.
+
+We will create a summarised dataset, named demographics where we count the number of survey respondants in each group. For simplicity we will remove all records where there are missing values.
+
+```{r}
+demographics <- brfss2013 %>%
+  filter(!is.na(sex) & !is.na(educa) & !is.na(income2)) %>%
+  group_by(sex, educa, income2) %>%
+  summarise(count = n())
+```
+
+It will be useful to calculate some summary statistics to quantify this grouping.
+
+```{r}
+brfss2013 %>%
+  filter(!is.na(sex)) %>%
+  group_by(sex) %>%
+  summarise(count = n()) %>%
+  mutate(percent_population = round((count / sum(count)) * 100))
+```
+```{r}
+brfss2013 %>%
+  filter(!is.na(income2)) %>%
+  group_by(income2) %>%
+  summarise(count = n()) %>%
+  mutate(percent_population = round((count / sum(count)) * 100))
+```
+```{r}
+brfss2013 %>%
+  filter(!is.na(educa)) %>%
+  group_by(educa) %>%
+  summarise(count = n()) %>%
+  mutate(percent_population = round((count / sum(count)) * 100))
+```
+
+Since we are dealing with categorical variables, we will focus on proportions of the sample that have belong to the largest categories. 59% of the sampled respondants are female, 24% earn $75,000 or more and 35% are college educated with 4 or more years pf education after high school. 
+
+To better interpret this, we will produce a couple of visualisations to see the distribution of education and income amongst our sample.
+```{r}
+ggplot(data = demographics, aes(x = educa, y = count)) +
+  geom_bar(stat = 'identity', aes(fill = sex)) +
+  theme(text = element_text(size=6),
+        axis.text.x = element_text(angle=90, hjust=1)) +
+  ggtitle('Count of respondants by education level and sex')
+```
+```{r}
+ggplot(data = demographics, aes(x = income2, y = count)) +
+  geom_bar(stat = 'identity', aes(fill = sex)) +
+  theme(text = element_text(size=10),
+        axis.text.x = element_text(angle=90, hjust=1))+
+  ggtitle('Count of respondants by income level and sex')
+```
+
+From the above graphics we can see that the majority of respondants are highly educated, and have salaries above $75,000. There are also slightly more female respondants compared to males, however this is more consistent with the actual US population. When generalising about this sample, we need to consider the demographics as college educated individuals with high salaries may have very different health characteristics to other groups.
+
+**Research quesion 2:**
+
+How do smoking habits relate to general health?
+
+Again we will calculate some summary statistics, and you can see below that the majority of people do not actually provide an answer here and so cannot be analyses (non-smokers)
+
+Despite this, there are still around 75,000 respondants to explore the impact that stopping smoking has on general health.
+
+```{r}
+brfss2013 %>%
+  group_by(stopsmk2) %>%
+  summarise(count = n()) %>%
+  mutate(percent_population = round((count / sum(count)) * 100))
+```
+```{r}
+brfss2013 %>%
+  group_by(lastsmk2) %>%
+  summarise(count = n()) %>%
+  mutate(percent_population = round((count / sum(count)) * 100))
+```
+
+
+```{r}
+tobacco <- brfss2013 %>%
+  filter(!is.na(genhlth) &!is.na(stopsmk2)) %>%
+  group_by(genhlth, lastsmk2, stopsmk2) %>%
+  summarise(count = n())
+```
+We have excluded all respondants with N/A in the stop smoking category i.e. non-smokers.
+
+Again, to better interpret this, we will produce a couple of visualisations to highlight relationships in the data.
+```{r}
+ggplot(data = tobacco, aes(x = genhlth, y = count, fill = stopsmk2)) +
+  geom_bar(stat = 'identity', position = 'dodge') +
+  theme(text = element_text(size=10),
+        axis.text.x = element_text(angle=90, hjust=1))+
+  ggtitle('Count of respondants by general health and smoker status')
+```
+
+Overall respondants with good or better general health, are more likely to have stopped smoking in the past 12 months in our sample. Conversely, respondants with fair or poor general health are also more likely to be smokers who have not stopped.
+
+In the next part we also exlcude some respondants who have never smoked, since this is not useful for our analysis.
+```{r}
+tobacco <- brfss2013 %>%
+  filter(!is.na(genhlth) & !is.na(lastsmk2)) %>%
+  group_by(genhlth, lastsmk2, stopsmk2) %>%
+  summarise(count = n())
+```
+```{r}
+ggplot(data = tobacco, aes(x = lastsmk2, y = count, fill = genhlth)) +
+  geom_bar(stat = 'identity', position = 'fill') +
+  theme(text = element_text(size=10),
+        axis.text.x = element_text(angle=90, hjust=1))+
+  ggtitle('Percentage of respondants by general health and smoker status')
+```
+
+Similarly here we see that the less regularly someone smokes, the higher proportion of people that are in very good or excellent health. We use percentages here since using counts would make differentiating the levels of general health quite difficult, and it is the general health and not the count of individuals in each group that we are interested in.
+
+**Research quesion 3:**
+
+To explore how minutes of exercise relates to general health, first we need to replace all N/A results with 0, assuming that respondants who did not answer this question have done zero exercise.
+```{r}
+brfss2013$exerhmm1 <- replace(brfss2013$exerhmm1,is.na(brfss2013$exerhmm1), 0)
+```
+
+The below summary statistics support the visualisation which follows, individiuals in good health do more exercise that those with poorer general health. It's worth noting that the standard deviations are quite high in each group, and the maximum values are 959 minutes for all groups.
+```{r}
+brfss2013 %>%
+  filter(!is.na(genhlth)) %>%
+  group_by(genhlth) %>%
+  summarise(mean_exercise = mean(exerhmm1), median_exercise = median(exerhmm1), iqr_exercise = IQR(exerhmm1), sd_exercise = sd(exerhmm1), min_exercise = min(exerhmm1), max_exercise =max(exerhmm1))
+```
+
+The below visualisation shows the average exersise (in minutes) for people in each category of general health.
+```{r}
+exercise <- brfss2013 %>%
+  filter(!is.na(genhlth) & !is.na(sex)) %>%
+  group_by(genhlth, sex) %>%
+  summarise(average_exercise = mean(exerhmm1))
+```
+```{r}
+ggplot(data = exercise, aes(x = genhlth, y = average_exercise)) +
+  geom_bar(stat = 'identity', position = 'dodge') +
+  theme(text = element_text(size=10),
+        axis.text.x = element_text(angle=90, hjust=1))+
+  ggtitle('Percentage of respondants by general health and daily exercise')
+```
+
+
+We can see that there is a strong trend in exercise frequency and general health. Respondants in good health do more exercise than those in poor health and this relation exists throughout each general health category.

@@ -1,0 +1,93 @@
+---
+title: "Statistical inference with the GSS data"
+output: 
+  html_document: 
+    fig_height: 4
+    highlight: pygments
+    theme: spacelab
+---
+
+## Setup
+
+### Load packages
+
+```{r load-packages, message = FALSE}
+library(ggplot2)
+library(dplyr)
+library(stats)
+```
+
+### Load data
+
+Make sure your data and R Markdown files are in the same directory. When loaded
+your data file will be called `gss`. Delete this note when before you submit 
+your work. 
+
+```{r load-data}
+load("gss.Rdata")
+```
+
+
+
+* * *
+
+## Part 1: Data
+The data collected by the General Social Survey is collected via an observational study i.e. the way in which data is collected does not directly intefer with how the data arises We can only establish association, and not causal relationships with this study.
+
+Although simple random sampling was not used, stratified sampling dividing the population into homogeneous groups followed by random sampling was performed.
+
+The generalizability of the data across the full population (census) is at risk due to the following: convenience sampling, non-response and voluntary response. The GSS describes their sampling methodology in great detail, and although it can never be 100% accurate for the purposes of this testing we will assume generalizability over the full population of the US.
+
+* * *
+
+## Part 2: Research question
+In this study we aim to establish whether race, in particular the fact that a respondant is white, will impact the highest level of eductaion achieved by the respondant.
+
+This is important to investigate the potential inequalities in eductaion level throughout the USA.
+
+* * *
+
+## Part 3: Exploratory data analysis
+
+We will focus on the variables 'race' and 'degree' throughout where 'race' is the race of the respondant, and 'degree' is the highest level of education received.
+```{r}
+grouped <- gss %>%
+  filter(!is.na(degree) & !is.na(race)) %>%
+  group_by(race, degree) %>%
+  summarise(count = n())
+```
+```{r}
+ggplot(data = grouped, aes(x = degree, y = count)) +
+  geom_bar(stat = 'identity', aes(fill = race),position ='fill') +
+  theme(text = element_text(size=6),
+        axis.text.x = element_text(angle=90, hjust=1)) +
+  ggtitle('Count of respondants by education level and race')
+```
+
+
+```{r}
+ggplot(data = gss, aes(x = race, y = age, fill = race)) +
+  geom_boxplot() +
+  facet_wrap(~ degree,ncol=6) +
+  theme(text = element_text(size=10),
+        axis.text.x = element_text(angle=90, hjust=1))+
+  ggtitle('Percentage of respondants by race, education and age')
+```
+
+The above shows that the majority of respondents are white, and that there appears to be a slight trend for white respondants to reach higher levels of education that other respondants. This difference is not conclusive by eye and this will be the focus of this study.
+
+```{r}
+gss %>%
+  group_by(race,degree) %>%
+  summarise(count = n()) %>%
+  mutate(percent_population = round((count / sum(count)) * 100))
+```
+
+The above table shows that 3% of black respondants, 9% of other respondants and 7% of white respondants achive Graduate level education.
+* * *
+
+## Part 4: Inference
+
+NOTE: Insert code chunks as needed by clicking on the "Insert a new code chunk" 
+button (green button with orange arrow) above. Make sure that your code is visible
+in the project you submit. Delete this note when before you submit your work.
